@@ -28,16 +28,8 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
         } while (true)
     }
 
-    @GetMapping("/")
-    fun index(): String? {
-        return "Greetings from Spring Boot!"
-    }
 
-    @GetMapping("/greeting")
-    fun greeting(@RequestHeader("uid") uid: String?): ResponseEntity<String?>? {
-        // code that uses the language variable
-        return ResponseEntity(uid, HttpStatus.OK)
-    }
+
 }
 @RestController
 class TapoFavorite(private val FavoritesOffensesRepository: FavoritesOffensesRepository){
