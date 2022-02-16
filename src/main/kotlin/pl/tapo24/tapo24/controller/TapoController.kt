@@ -1,15 +1,19 @@
 package pl.tapo24.tapo24.controller
 
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+
 import org.springframework.web.bind.annotation.*
-import pl.tapo24.tapo24.dao.FavoritesOffenses
 import pl.tapo24.tapo24.dao.FavoritesOffensesRepository
-import pl.tapo24.tapo24.dao.UniqueInstallationId
+import pl.tapo24.tapo24.dao.Repository.ModuleClickedRepository
 import pl.tapo24.tapo24.dao.UniqueInstallationIdRepository
+import pl.tapo24.tapo24.dao.entity.FavoritesOffenses
+import pl.tapo24.tapo24.dao.entity.ModuleClicked
+import pl.tapo24.tapo24.dao.entity.UniqueInstallationId
 import pl.tapo24.tapo24.others.gen_UID
 import java.util.*
 import javax.validation.Valid
+
+
+
 
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
@@ -44,5 +48,22 @@ class TapoFavorite(private val FavoritesOffensesRepository: FavoritesOffensesRep
         }
         return
     }
-
+}
+@CrossOrigin(origins = ["*"])
+@RestController
+@RequestMapping("/api")
+class TapoModuleClicked(private  val  ModuleClicked: ModuleClickedRepository) {
+    //@CrossOrigin(origins = ["http://localhost:8082"])
+    @PostMapping("/module_clicked")
+    fun putModuleCLicked(@Valid @RequestBody data: ModuleClicked){
+        data.moduleName = data.moduleName.lowercase()
+        if (ModuleClicked.existsByModuleName(moduleName = data.moduleName)) {
+            val response = ModuleClicked.findByModuleNameIs(moduleName = data.moduleName)
+            val times = response.times +1
+            ModuleClicked.updateTimesByModuleNameIs(times, moduleName = data.moduleName)
+        } else  {
+            ModuleClicked.save(data)
+        }
+        return
+    }
 }

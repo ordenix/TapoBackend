@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import pl.tapo24.tapo24.dao.UniqueInstallationId
+import pl.tapo24.tapo24.dao.entity.UniqueInstallationId
 
 @Repository
 interface UniqueInstallationIdRepository : JpaRepository<UniqueInstallationId, Long> {
