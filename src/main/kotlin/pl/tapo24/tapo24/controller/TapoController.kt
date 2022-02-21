@@ -79,6 +79,7 @@ class TapoModuleClicked(private  val  ModuleClicked: ModuleClickedRepository) {
         client.use {
             val point = Point
                 .measurement("clicked_on")
+                .addTag("module_name",module)
                 .addField(module, 1)
                 .time(Instant.now(), WritePrecision.NS);
             val writeApi = client.getWriteKotlinApi()
