@@ -1,0 +1,28 @@
+{
+  "properties": [
+    {
+      "name": "spring.influx.token",
+      "type": "java.lang.String",
+      "description": "Description for spring.influx.token."
+    },
+    {
+      "name": "spring.influx.org",
+      "type": "java.lang.String",
+      "description": "Description for spring.influx.token."
+    },
+    {
+      "name": "spring.influx.host",
+      "type": "java.lang.String",
+      "description": "Description for spring.influx.token."
+    },
+    {
+      "name": "spring.influx.bucket_module",
+      "type": "java.lang.String",
+      "description": "Description for spring.influx.token."
+    },
+    {
+      "name": "spring.influx.bucket_pdf",
+      "type": "java.lang.String",
+      "description": "Description for spring.influx.token."
+    }
+  ] }
