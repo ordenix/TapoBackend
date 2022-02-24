@@ -13,10 +13,10 @@ class InstallationStatus(
     val UID: String = "",
 
 
-    @Column()
+    @Column(unique = false)
     var version_number: String = "",
 
-    @Column()
+    @Column(unique = false)
     var last_start: Long = 0
 ) {
 }
