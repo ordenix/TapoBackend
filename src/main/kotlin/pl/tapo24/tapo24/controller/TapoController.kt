@@ -6,23 +6,27 @@ import com.influxdb.client.kotlin.InfluxDBClientKotlinFactory
 import com.influxdb.client.write.Point
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pl.tapo24.tapo24.dao.FavoritesOffensesRepository
+import pl.tapo24.tapo24.dao.Repository.InstallationStatusRepository
 import pl.tapo24.tapo24.dao.Repository.ModuleClickedRepository
+import pl.tapo24.tapo24.dao.Repository.VersionsRepository
 import pl.tapo24.tapo24.dao.UniqueInstallationIdRepository
-import pl.tapo24.tapo24.dao.entity.FavoritesOffenses
-import pl.tapo24.tapo24.dao.entity.ModuleClicked
-import pl.tapo24.tapo24.dao.entity.UniqueInstallationId
+import pl.tapo24.tapo24.dao.entity.*
 import pl.tapo24.tapo24.others.gen_UID
 import java.time.Instant
 import java.util.*
 import javax.validation.Valid
 
-
+@CrossOrigin(origins = ["*"])
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @RestController
-@RequestMapping("/api")
-class TapoController(private val UniqueInstallationIdRepository: UniqueInstallationIdRepository) {
+@RequestMapping("/api/installation")
+class TapoController(private val UniqueInstallationIdRepository: UniqueInstallationIdRepository,
+                     private val VersionsRepository:VersionsRepository,
+                     private val InstallationStatusRepository:InstallationStatusRepository) {
 
     @GetMapping("/get_UID")
     fun getUidInstallation(): Any {
@@ -34,9 +38,30 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
             }
         } while (true)
     }
+    @GetMapping("/get_last_versions")
+    fun getLastVersion():Versions {
+        return if (VersionsRepository.findFirstByOrderByIdDesc().version_number.isNullOrEmpty()) Versions(0,"")
+        else VersionsRepository.findFirstByOrderByIdDesc()
+    }
 
 
-
+    @PostMapping("/install_Param")
+    fun setLastStart(@Valid @RequestBody data: InstallationStatus): ResponseEntity<InstallationStatus> {
+        val version = VersionsRepository.findFirstByOrderByIdDesc().version_number
+        val unixTime = System.currentTimeMillis() / 1000L
+        return if (InstallationStatusRepository.existsByUID(data.UID)){
+            InstallationStatusRepository.updateLast_startByUID(UID = data.UID, last_start = unixTime)
+            InstallationStatusRepository.updateVersion_numberByUID(UID = data.UID, version_number = version)
+            ResponseEntity(InstallationStatusRepository.findByUID(data.UID), HttpStatus.OK)
+        }
+        // updateLast_startByUID(last_start = data.last_start, UID = data.UID)
+        else {
+            data.last_start = unixTime
+            data.version_number = version
+            InstallationStatusRepository.save(data)
+            ResponseEntity(data, HttpStatus.OK)
+        }
+    }
 }
 @RestController
 class TapoFavorite(private val FavoritesOffensesRepository: FavoritesOffensesRepository){
@@ -81,7 +106,7 @@ class TapoModuleClicked(private  val  ModuleClicked: ModuleClickedRepository) {
                 .measurement("clicked_on")
                 .addTag("module_name",module)
                 .addField(module, 1)
-                .time(Instant.now(), WritePrecision.NS);
+                .time(Instant.now(), WritePrecision.NS)
             val writeApi = client.getWriteKotlinApi()
             writeApi.writePoint(point)
         }
