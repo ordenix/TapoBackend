@@ -27,4 +27,12 @@ interface InstallationStatusRepository: JpaRepository<InstallationStatus, Long> 
     @Query("update InstallationStatus i set i.version_number = ?1 where i.UID = ?2")
     fun updateVersion_numberByUID(version_number: String, UID: String): Int
 
+
+    @Query("select i from InstallationStatus i where i.last_start >= ?1")
+    fun findByLast_startGreaterThanEqual(last_start: Long): List<InstallationStatus>
+
+
+    @Query("select count(i) from InstallationStatus i where i.version_number = ?1")
+    fun countByVersion_numberIs(version_number: String): Long
+
 }

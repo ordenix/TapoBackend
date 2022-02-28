@@ -8,4 +8,7 @@ interface VersionsRepository: JpaRepository<Versions, Long> {
 
     fun findFirstByOrderByIdDesc(): Versions
 
+
+    fun findByOrderByIdAsc(): List<Versions>
+
 }

@@ -15,6 +15,7 @@ import pl.tapo24.tapo24.dao.Repository.ModuleClickedRepository
 import pl.tapo24.tapo24.dao.Repository.VersionsRepository
 import pl.tapo24.tapo24.dao.UniqueInstallationIdRepository
 import pl.tapo24.tapo24.dao.entity.*
+import pl.tapo24.tapo24.others.VersionStatusInstallation
 import pl.tapo24.tapo24.others.gen_UID
 import java.time.Instant
 import java.util.*
@@ -43,7 +44,22 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
         return if (VersionsRepository.findFirstByOrderByIdDesc().version_number.isNullOrEmpty()) Versions(0,"")
         else VersionsRepository.findFirstByOrderByIdDesc()
     }
+    @GetMapping("/get_last_24h_run")
+    fun getLast24hRun(): Any {
+        val unixTime = System.currentTimeMillis() / 1000L - 24 * 60 * 60
+        return Collections.singletonMap("Times_Run_Last_24h", InstallationStatusRepository.findByLast_startGreaterThanEqual(unixTime).size)
+    }
 
+    @GetMapping("/get_status_versions")
+    fun getStatusVersions(): Any {
+        val versions: List<Versions> = VersionsRepository.findByOrderByIdAsc()
+        val response: ArrayList<VersionStatusInstallation> = ArrayList()
+        for (element in versions) {
+            val count: Long = InstallationStatusRepository.countByVersion_numberIs(element.version_number)
+            response.add(VersionStatusInstallation(element.version_number,count = count))
+        }
+        return response
+    }
 
     @PostMapping("/install_Param")
     fun setLastStart(@Valid @RequestBody data: InstallationStatus): ResponseEntity<InstallationStatus> {
