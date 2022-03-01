@@ -13,6 +13,7 @@ import pl.tapo24.tapo24.dao.FavoritesOffensesRepository
 import pl.tapo24.tapo24.dao.Repository.InstallationStatusRepository
 import pl.tapo24.tapo24.dao.Repository.ModuleClickedRepository
 import pl.tapo24.tapo24.dao.Repository.VersionsRepository
+import pl.tapo24.tapo24.dao.Repository.userAgentRepository
 import pl.tapo24.tapo24.dao.UniqueInstallationIdRepository
 import pl.tapo24.tapo24.dao.entity.*
 import pl.tapo24.tapo24.others.VersionStatusInstallation
@@ -27,7 +28,8 @@ import javax.validation.Valid
 @RequestMapping("/api/installation")
 class TapoController(private val UniqueInstallationIdRepository: UniqueInstallationIdRepository,
                      private val VersionsRepository:VersionsRepository,
-                     private val InstallationStatusRepository:InstallationStatusRepository) {
+                     private val InstallationStatusRepository:InstallationStatusRepository,
+                     private val userAgentRepository: userAgentRepository) {
 
     @GetMapping("/get_UID")
     fun getUidInstallation(): Any {
@@ -39,15 +41,24 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
             }
         } while (true)
     }
+
     @GetMapping("/get_last_versions")
     fun getLastVersion():Versions {
         return if (VersionsRepository.findFirstByOrderByIdDesc().version_number.isNullOrEmpty()) Versions(0,"")
         else VersionsRepository.findFirstByOrderByIdDesc()
     }
+
     @GetMapping("/get_last_24h_run")
     fun getLast24hRun(): Any {
         val unixTime = System.currentTimeMillis() / 1000L - 24 * 60 * 60
         return Collections.singletonMap("Times_Run_Last_24h", InstallationStatusRepository.findByLast_startGreaterThanEqual(unixTime).size)
+    }
+
+    @PostMapping("/set_user_agent")
+    fun setUserAgent(@Valid @RequestBody data: userAgent) {
+        if (userAgentRepository.existsByUID(UID = data.UID)) {
+            userAgentRepository.updateUser_agentByUID(user_agent = data.user_agent, UID = data.UID)
+        } else userAgentRepository.save(data)
     }
 
     @GetMapping("/get_status_versions")
