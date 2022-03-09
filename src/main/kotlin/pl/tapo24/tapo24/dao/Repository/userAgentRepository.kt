@@ -16,4 +16,8 @@ interface userAgentRepository:JpaRepository <userAgent, Long> {
     @Query("update userAgent u set u.user_agent = ?1 where u.UID = ?2")
     fun updateUser_agentByUID(user_agent: String, UID: String): Int
 
+
+    @Query("select u from userAgent u order by u.id")
+    fun findByOrderByIdAsc(): List<userAgent>
+
 }

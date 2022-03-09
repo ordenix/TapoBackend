@@ -16,6 +16,7 @@ import pl.tapo24.tapo24.dao.Repository.VersionsRepository
 import pl.tapo24.tapo24.dao.Repository.userAgentRepository
 import pl.tapo24.tapo24.dao.UniqueInstallationIdRepository
 import pl.tapo24.tapo24.dao.entity.*
+import pl.tapo24.tapo24.others.AgentsStatusInstallation
 import pl.tapo24.tapo24.others.VersionStatusInstallation
 import pl.tapo24.tapo24.others.gen_UID
 import java.time.Instant
@@ -69,6 +70,40 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
             val count: Long = InstallationStatusRepository.countByVersion_numberIs(element.version_number)
             response.add(VersionStatusInstallation(element.version_number,count = count))
         }
+        return response
+    }
+
+    @GetMapping("/get_status_agents")
+    fun getStatusAgents(): ArrayList<AgentsStatusInstallation> {
+        val response: ArrayList<AgentsStatusInstallation> = ArrayList()
+        var windows: Long = 0
+        var windowsMobile: Long = 0
+        var android: Long = 0
+        var androidLinux: Long = 0
+        var iphone: Long = 0
+        val query: List<userAgent> = userAgentRepository.findByOrderByIdAsc()
+        for (element in query) {
+            if (element.user_agent.indexOf("(Linux; Android", 0) != -1) {
+                androidLinux ++
+            }
+            if (element.user_agent.indexOf("(Android", 0) != -1) {
+                android ++
+            }
+            if (element.user_agent.indexOf("(iPhone;", 0) != -1) {
+                iphone ++
+            }
+            if (element.user_agent.indexOf("(Windows NT", 0) != -1) {
+                windows ++
+            }
+            if (element.user_agent.indexOf("(Windows Phone", 0) != -1) {
+                windowsMobile ++
+            }
+        }
+        response.add(AgentsStatusInstallation(AgentName = "Windows", count = windows))
+        response.add(AgentsStatusInstallation(AgentName = "Windows mobile", count = windowsMobile))
+        response.add(AgentsStatusInstallation(AgentName = "Android", count = android))
+        response.add(AgentsStatusInstallation(AgentName = "Android Linux", count = androidLinux))
+        response.add(AgentsStatusInstallation(AgentName = "iphone", count = iphone))
         return response
     }
 

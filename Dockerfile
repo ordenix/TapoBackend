@@ -11,4 +11,6 @@ RUN mkdir /app
 
 COPY --from=build /home/gradle/src/build/libs/tapo24-0.0.1-SNAPSHOT.jar /app/tapo24-0.0.1-SNAPSHOT.jar
 
+COPY /src/main/resources/keystore.jks /app/keystore.jks
+
 ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/tapo24-0.0.1-SNAPSHOT.jar"]
