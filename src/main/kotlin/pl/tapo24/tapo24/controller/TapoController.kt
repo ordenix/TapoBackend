@@ -19,6 +19,10 @@ import pl.tapo24.tapo24.dao.entity.*
 import pl.tapo24.tapo24.others.AgentsStatusInstallation
 import pl.tapo24.tapo24.others.VersionStatusInstallation
 import pl.tapo24.tapo24.others.gen_UID
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.time.Instant
 import java.util.*
 import javax.validation.Valid
@@ -57,9 +61,11 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
 
     @PostMapping("/set_user_agent")
     fun setUserAgent(@Valid @RequestBody data: userAgent) {
-        if (userAgentRepository.existsByUID(UID = data.UID)) {
-            userAgentRepository.updateUser_agentByUID(user_agent = data.user_agent, UID = data.UID)
-        } else userAgentRepository.save(data)
+        if (UniqueInstallationIdRepository.existsByUIDIs(UID = data.UID)) {
+            if (userAgentRepository.existsByUID(UID = data.UID)) {
+                userAgentRepository.updateUser_agentByUID(user_agent = data.user_agent, UID = data.UID)
+            } else userAgentRepository.save(data)
+        }
     }
 
     @GetMapping("/get_status_versions")
@@ -109,19 +115,23 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
 
     @PostMapping("/install_Param")
     fun setLastStart(@Valid @RequestBody data: InstallationStatus): ResponseEntity<InstallationStatus> {
-        val version = VersionsRepository.findFirstByOrderByIdDesc().version_number
-        val unixTime = System.currentTimeMillis() / 1000L
-        return if (InstallationStatusRepository.existsByUID(data.UID)){
-            InstallationStatusRepository.updateLast_startByUID(UID = data.UID, last_start = unixTime)
-            InstallationStatusRepository.updateVersion_numberByUID(UID = data.UID, version_number = version)
-            ResponseEntity(InstallationStatusRepository.findByUID(data.UID), HttpStatus.OK)
-        }
-        // updateLast_startByUID(last_start = data.last_start, UID = data.UID)
-        else {
-            data.last_start = unixTime
-            data.version_number = version
-            InstallationStatusRepository.save(data)
-            ResponseEntity(data, HttpStatus.OK)
+        if (UniqueInstallationIdRepository.existsByUIDIs(UID = data.UID)) {
+            val version = VersionsRepository.findFirstByOrderByIdDesc().version_number
+            val unixTime = System.currentTimeMillis() / 1000L
+            return if (InstallationStatusRepository.existsByUID(data.UID)){
+                InstallationStatusRepository.updateLast_startByUID(UID = data.UID, last_start = unixTime)
+                InstallationStatusRepository.updateVersion_numberByUID(UID = data.UID, version_number = version)
+                ResponseEntity(InstallationStatusRepository.findByUID(data.UID), HttpStatus.OK)
+            }
+            // updateLast_startByUID(last_start = data.last_start, UID = data.UID)
+            else {
+                data.last_start = unixTime
+                data.version_number = version
+                InstallationStatusRepository.save(data)
+                ResponseEntity(data, HttpStatus.OK)
+            }
+        } else {
+            return ResponseEntity(data, HttpStatus.CONFLICT)
         }
     }
 }
@@ -146,6 +156,7 @@ class TapoModuleClicked(private  val  ModuleClicked: ModuleClickedRepository) {
     @Value("\${spring.influx.token}")
     private val token: String? = null
     //@CrossOrigin(origins = ["http://localhost:8082"])
+    // TODO: DELETE IT IF WILL BE NOT USED
     @PostMapping("/module_clicked")
     fun putModuleCLicked(@Valid @RequestBody data: ModuleClicked){
         data.moduleName = data.moduleName.lowercase()
@@ -174,5 +185,26 @@ class TapoModuleClicked(private  val  ModuleClicked: ModuleClickedRepository) {
         }
         client.close()
 
+    }
+}
+@CrossOrigin(origins = ["*"])
+@Suppress("SpringJavaInjectionPointsAutowiringInspection")
+@RestController
+@RequestMapping("/api/postal_code")
+class TapoPostalCode(private  val  ModuleClicked: ModuleClickedRepository) {
+    @GetMapping("/get_by_city")
+    fun getByCity(@RequestParam code: String):ResponseEntity<String>{
+        val client = HttpClient.newBuilder().build();
+        val request = HttpRequest.newBuilder()v
+            .uri(URI.create("https://polish-zip-codes1.p.rapidapi.com/${code}"))
+            .setHeader("x-rapidapi-host", "polish-zip-codes1.p.rapidapi.com")
+            .setHeader("x-rapidapi-key", "c12d626061msh43653fb2a1f88cbp1d0a56jsndebedd586ca5")
+            .build();
+
+        val response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode()==404) {
+            return ResponseEntity(response.body(), HttpStatus.NOT_FOUND)
+        }
+        return ResponseEntity(response.body(), HttpStatus.OK)
     }
 }
