@@ -10,13 +10,11 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pl.tapo24.tapo24.dao.FavoritesOffensesRepository
-import pl.tapo24.tapo24.dao.Repository.InstallationStatusRepository
-import pl.tapo24.tapo24.dao.Repository.ModuleClickedRepository
-import pl.tapo24.tapo24.dao.Repository.VersionsRepository
-import pl.tapo24.tapo24.dao.Repository.userAgentRepository
+import pl.tapo24.tapo24.dao.Repository.*
 import pl.tapo24.tapo24.dao.UniqueInstallationIdRepository
 import pl.tapo24.tapo24.dao.entity.*
 import pl.tapo24.tapo24.others.AgentsStatusInstallation
+import pl.tapo24.tapo24.others.Uid
 import pl.tapo24.tapo24.others.VersionStatusInstallation
 import pl.tapo24.tapo24.others.gen_UID
 import java.net.URI
@@ -34,7 +32,9 @@ import javax.validation.Valid
 class TapoController(private val UniqueInstallationIdRepository: UniqueInstallationIdRepository,
                      private val VersionsRepository:VersionsRepository,
                      private val InstallationStatusRepository:InstallationStatusRepository,
-                     private val userAgentRepository: userAgentRepository) {
+                     private val userAgentRepository: userAgentRepository,
+                     private  val  VipAccessRepository: VipAccessRepository
+) {
 
     @GetMapping("/get_UID")
     fun getUidInstallation(): Any {
@@ -134,6 +134,15 @@ class TapoController(private val UniqueInstallationIdRepository: UniqueInstallat
             return ResponseEntity(data, HttpStatus.CONFLICT)
         }
     }
+
+    @PostMapping("/get_permissions")
+    fun getPermissions(@RequestBody uid: Uid):Any {
+        return if (VipAccessRepository.existsByUid(uid = uid.uid)) {
+            VipAccessRepository.findByUid(uid = uid.uid)
+        } else {
+            ResponseEntity("Not found in permissions table", HttpStatus.NOT_FOUND)
+        }
+    }
 }
 @RestController
 class TapoFavorite(private val FavoritesOffensesRepository: FavoritesOffensesRepository){
@@ -195,7 +204,7 @@ class TapoPostalCode(private  val  ModuleClicked: ModuleClickedRepository) {
     @GetMapping("/get_by_city")
     fun getByCity(@RequestParam code: String):ResponseEntity<String>{
         val client = HttpClient.newBuilder().build();
-        val request = HttpRequest.newBuilder()v
+        val request = HttpRequest.newBuilder()
             .uri(URI.create("https://polish-zip-codes1.p.rapidapi.com/${code}"))
             .setHeader("x-rapidapi-host", "polish-zip-codes1.p.rapidapi.com")
             .setHeader("x-rapidapi-key", "c12d626061msh43653fb2a1f88cbp1d0a56jsndebedd586ca5")
